@@ -52,13 +52,13 @@ prompt_org_user_pass () {
 # Prompt user for Orchestrator administrator details
 prompt_orch_credentials () {
   # check if variables exist
-  if [ -z "${kc_pass+xxx}" ]; then
+  if [ -z "${KC_ADMIN_PASSWORD+xxx}" ]; then
     echo -e "${GREEN}"
     read -p ' What is your orchestrator cluster_fqdn? :  ' CLUSTER_FQDN
     echo -e "${CYAN}Password can be retrieved from orchestrator node: kubectl -n orch-platform get secret platform-keycloak -o jsonpath='{.data.admin-password}' | base64 -d ${NC}"
     echo -e "${GREEN}"
     read -p ' Please input Keycloak Administrator user name (e.g. admin) :  ' kc_admin
-    read -p ' Please input your Keycloak Administrator password :  ' kc_pass
+    read -p ' Please input your Keycloak Administrator password :  ' KC_ADMIN_PASSWORD
     echo -e "${NC}"
     if nc -w 2 -z keycloak.${CLUSTER_FQDN} 443 2>/dev/null; then
        echo -e "${CYAN}!! keycloak.${CLUSTER_FQDN}} ✓  REACHABLE!${NC}"

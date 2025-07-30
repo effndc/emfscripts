@@ -19,20 +19,30 @@ createProjectAdmin: create Keycloak User and assign permission groups
 
 '
 # retrieve API token 
-# Inputs: user pass cluster_fqdn
 # Output: api_token
+# AI Improved: api_token function with realm, client_id, and scope as parameters
+# Usage: api_token <user> <pass> <cluster_fqdn> [realm] [client_id] [scope]
 function api_token() {
-  local user=$1
-  local pass=$2
-  local cluster_fqdn=$3
-  api_token=$(curl ${CURL_FLAGS} -X POST "https://keycloak.${cluster_fqdn}/realms/master/protocol/openid-connect/token" -d "username=${user}" -d "password=${pass}" -d "grant_type=password" -d "client_id=system-client" -d "scope=openid" | jq -r '.access_token')
+  local user="$1"
+  local pass="$2"
+  local cluster_fqdn="$3"
+  local realm="${4:-master}"                # Default to 'master' if not provided
+  local client_id="${5:-system-client}"     # Default to 'system-client' if not provided
+  local scope="${6:-openid}"                # Default to 'openid' if not provided
 
-  if [[ "$api_token" == "null" ]]; then
-    echo -e "${RED}Cannot retrieve API Token from $cluster_fqdn for user ${user} ${NC}" >&2
+  api_token=$(curl ${CURL_FLAGS} -s -X POST \
+    "https://keycloak.${cluster_fqdn}/realms/${realm}/protocol/openid-connect/token" \
+    -d "username=${user}" \
+    -d "password=${pass}" \
+    -d "grant_type=password" \
+    -d "client_id=${client_id}" \
+    -d "scope=${scope}" | jq -r '.access_token')
+
+  if [[ -z "$api_token" || "$api_token" == "null" ]]; then
+    echo -e "${RED}Cannot retrieve API Token from $cluster_fqdn for user ${user} in realm ${realm} ${NC}" >&2
     exit 1
   fi
-  echo "Authentication token retrieved for ${user}"
-  #echo -e "Token is: ${api_token}"
+  echo "Authentication token retrieved for ${user} in realm ${realm}"
 }
 
 # Create Org in Orchestrator

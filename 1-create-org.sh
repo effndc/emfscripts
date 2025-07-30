@@ -7,13 +7,17 @@
 set -euo pipefail
 set -o nounset
 
-## Define variables for rapid re-use
-CLUSTER_FQDN="a.tiberedge.com"
-kc_admin="admin"
-kc_pass=ChangeMeOn1stLogin!
+# Define variables for rapid re-use
+## If not being executed on orchestrator node, define these variables manually for rapid re-use.
+CLUSTER_FQDN=
+KC_ADMINUSER=
+KC_ADMIN_PASSWORD=
 
-## user data -- will prompt for input when not predefined 
-# Password complexity reuqirements can be viewed https://keycloak.${CLUSTER_FQDN}/admin/master/console/#/master/authentication/policies 
+## If being executed on orchestrator node, source this script to auto-discover details.
+source "$DIR/orch-query.sh" 
+
+# user data -- will prompt for input when not pre-defined 
+## Password complexity reuqirements can be viewed https://keycloak.${CLUSTER_FQDN}/admin/master/console/#/master/authentication/policies 
 #ORG_ADMIN_PASS=MyInsecurePassw0rd!
 # if static org name is desired then define variable below
 #org_name=$1
@@ -24,7 +28,9 @@ CURL_FLAGS="-s"
 # for self signed-cert environments add --insecure
 #CURL_FLAGS="-s --insecure" 
 
-## DO NOT EDIT BELOW 
+# !!!!!!!!!!!!!!!!!
+# DO NOT EDIT BELOW 
+# !!!!!!!!!!!!!!!!!
 
 CYAN='\033[0;36m'
 RED='\033[0;31m'
@@ -44,14 +50,14 @@ prompt_org
 prompt_org_admin_pass
 
 # authenticate as admin
-api_token ${kc_admin} ${kc_pass} ${CLUSTER_FQDN}
+api_token ${KC_ADMINUSER} ${KC_ADMIN_PASSWORD} ${CLUSTER_FQDN}
 
 # add kc_admin user to org-admin-group 
-get_keycloak_user_id ${kc_admin} ${CLUSTER_FQDN} ${api_token}
+get_keycloak_user_id ${KC_ADMINUSER} ${CLUSTER_FQDN} ${api_token}
 addGroupToKeycloakUser ${api_token} ${user_id} org-admin-group ${CLUSTER_FQDN}
 
 # Refresh token with new groups, create org and org admin user
-api_token ${kc_admin} ${kc_pass} ${CLUSTER_FQDN}
+api_token ${KC_ADMINUSER} ${KC_ADMIN_PASSWORD} ${CLUSTER_FQDN}
 createOrg ${org_name} ${CLUSTER_FQDN} ${api_token}
 createOrgAdmin  ${org_name} ${CLUSTER_FQDN} ${api_token}
 
