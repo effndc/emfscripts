@@ -6,6 +6,8 @@
 
 set -euo pipefail
 set -o nounset
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 
 # Define variables for rapid re-use
 ## If not being executed on orchestrator node, define these variables manually for rapid re-use.
@@ -38,7 +40,6 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 # source KC utils
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source "${DIR}/kc-utils.sh"
 source "${DIR}/prompt-user.sh"
 
