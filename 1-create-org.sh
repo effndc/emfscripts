@@ -1,34 +1,16 @@
 #!/usr/bin/env bash
 
-# SPDX-FileCopyrightText: 2025 Intel Corporation
+# SPDX-FileCopyrightText: 2025 @effndc
 #
 # SPDX-License-Identifier: Apache-2.0
+
+# Please edit the ./user-variables.sh file to modify static or collected user variables.
+# Usage: depending on variables pre-defined in user-variables.sh:
+# ./1create-org.sh <ORGNAME> 
 
 set -euo pipefail
 set -o nounset
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
-
-# Define variables for rapid re-use
-## If not being executed on orchestrator node, define these variables manually for rapid re-use.
-CLUSTER_FQDN=
-KC_ADMINUSER=
-KC_ADMIN_PASSWORD=
-
-## If being executed on orchestrator node, source this script to auto-discover details.
-source "$DIR/orch-query.sh" 
-
-# user data -- will prompt for input when not pre-defined 
-## Password complexity reuqirements can be viewed https://keycloak.${CLUSTER_FQDN}/admin/master/console/#/master/authentication/policies 
-#ORG_ADMIN_PASS=MyInsecurePassw0rd!
-# if static org name is desired then define variable below
-#org_name=$1
-
-# Flags for Curl
-# default, recommended: -s = silent
-CURL_FLAGS="-s" 
-# for self signed-cert environments add --insecure
-#CURL_FLAGS="-s --insecure" 
 
 # !!!!!!!!!!!!!!!!!
 # DO NOT EDIT BELOW 
@@ -40,6 +22,8 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 # source KC utils
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$DIR/user-variables.sh" 
 source "${DIR}/kc-utils.sh"
 source "${DIR}/prompt-user.sh"
 
