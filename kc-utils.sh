@@ -42,11 +42,12 @@ function api_token() {
     echo -e "${RED}Cannot retrieve API Token from $cluster_fqdn for user ${user} in realm ${realm} ${NC}" >&2
     exit 1
   fi
-  echo "Authentication token retrieved for ${user} in realm ${realm}"
+  #echo "Authentication token retrieved for ${user} in realm ${realm}"
+  echo "$api_token"
 }
 
 # Create Org in Orchestrator
-# createOrg org_name cluster_fqdn jwt_token
+# Usage: createOrg <org_name> <cluster_fqdn> <jwt_token>
 function createOrg() {
   local org_name=$1
   local cluster_fqdn=$2
@@ -117,7 +118,7 @@ function createOrgAdmin {
   echo -e "${CYAN}Admin user ${org_admin_user} has been successfully created in ${org_name} ${NC}"
 }
 
-# createProjectInOrg org_name project_name cluster_fqdn jwt_token
+# Usage: createProjectInOrg <org_name> <project_name> <cluster_fqdn> <jwt_token>
 function createProjectInOrg() {
     local org_name=$1
     local project_name=$2
@@ -132,7 +133,7 @@ function createProjectInOrg() {
     echo -e "${CYAN}Project ${project_name} has been successfully created in ${org_name} ${NC}"
 }
 
-# Create Project Admin account and add to groups
+# Usage: createProjectAdmin <username> <org_name> <cluster_fqdn> <jwt_token>
 function createProjectAdmin() {
   local username=$1
   local org_name=$2
@@ -166,7 +167,7 @@ function createProjectAdmin() {
 }
 
 # Create Project User 
-# createProjectUser username org_name project_name cluster_fqdn jwt_token admin_token 
+# Usage: createProjectUser <username> <org_name> <project_name> <cluster_fqdn> <jwt_token> [admin_token] [groups]
 function createProjectUser() {
   local username=$1
   local org_name=$2
@@ -203,7 +204,7 @@ function createProjectUser() {
 }
 
 # Create KeyCloakUser
-# createKeycloakUser token username password cluster_fqdn
+# Usage: createKeycloakUser <token> <username> <password> <cluster_fqdn>
 function createKeycloakUser() {
   local token=$1
   local username=$2
@@ -227,7 +228,7 @@ function createKeycloakUser() {
 }
 
 # Add User to Groups in KeyCloak 
-# addGroupToKeycloakUser token user_id group_name cluster_fqdn
+# Usage: addGroupToKeycloakUser <token> <user_id> <group_name> <cluster_fqdn>
 function OFFaddGroupToKeycloakUser() {
   local token=$1
   local user_id=$2
@@ -247,6 +248,7 @@ function OFFaddGroupToKeycloakUser() {
        -d '{}'
 }
 
+# Usage: addGroupToKeycloakUser <token> <user_id> <group_name> <cluster_fqdn>
 function addGroupToKeycloakUser() {
   local token="$1"
   local user_id="$2"
@@ -269,7 +271,7 @@ function addGroupToKeycloakUser() {
 
 
 # Get all orgs from Orchestrator
-# getOrgs cluster_fqdn jwt_token 
+# Usage getOrgs <cluster_fqdn> <jwt_token
 function getOrgs() {
   local cluster_fqdn=$1
   local jwt_token=$2
@@ -277,8 +279,7 @@ function getOrgs() {
   echo ${orgs_list}
 }
 
-# Delete org from Orchestrator
-# deleteOrg org_name cluster_fqdn jwt_token
+# Usage: deleteOrg <org_name> <cluster_fqdn> <jwt_token>
 function deleteOrg() {
   local org_name=$1
   local cluster_fqdn=$2
@@ -296,9 +297,36 @@ function deleteOrg() {
     fi
 }
 
-# Function to get Keycloak user ID by username
-# get_keycloak_user_id username cluster_fqdn admin_token
-# Output: user_id
+# Usage: getProjects <cluster_fqdn> <jwt_token>
+# Returns: list of projects with their names and UIDs
+# Org selection is based on the JWT token provided, so the user must have permissions to delete the project
+function getProjects () {
+  local cluster_fqdn=$1
+  local jwt_token=$2
+  echo -e "${CYAN}Retrieving all projects ${NC}"
+  echo "| Project Name | Project UID |"
+  curl ${CURL_FLAGS} -X GET "https://api.${cluster_fqdn}/v1/projects" -H "Authorization: Bearer ${jwt_token}" | jq -r '.[] | select(.name and .status.projectStatus.uID) | "| \(.name) | \(.status.projectStatus.uID)"'
+}
+
+# Usage: deleteProject <project_name> <cluster_fqdn> <jwt_token>
+# Org selection is based on the JWT token provided, so the user must have permissions to delete the project
+function deleteProject() {
+  local project_name=$1
+  local cluster_fqdn=$2
+  local jwt_token=$3
+  echo -e "${CYAN}Deleting Project ${project_name} ${NC}"
+  response=$(curl ${CURL_FLAGS} -o /dev/null -w "%{http_code}" -X DELETE "https://api.${cluster_fqdn}/v1/projects/${project_name}" \
+        -H "Authorization: Bearer ${jwt_token}")
+    if [ "$response" -eq 200 ]; then
+        echo "Project ${project_name} deleted successfully."
+    else
+        echo "Failed to delete Project ${project_name}. HTTP response code: $response"
+        exit 1
+    fi
+}
+
+# Usage: get_keycloak_user_id <username> <cluster_fqdn> <jwt_token>
+# Returns: user_id
 function get_keycloak_user_id() {
     local username="$1"
     local cluster_fqdn="$2"
@@ -314,10 +342,17 @@ function get_keycloak_user_id() {
 }
 
 #KC get all users: 
-# curl ${CURL_FLAGS} -X GET https://keycloak.${CLUSTER_FQDN}/admin/realms/master/users -H "Authorization: Bearer ${jwt_token}")
-# Function to delete Keycloak user using the admin JWT token
-# delete_keycloak_user username admin_token cluster_fqdn
+# Usage: getkcUsers <cluster_fqdn> <jwt_token>
+function getkcUsers() {
+  local cluster_fqdn=$1
+  local jwt_token=$2
+  echo "${CYAN}Retrieving all Keycloak users ${NC}"
+  echo "| Username      | Email          | UID                  |"
+  curl ${CURL_FLAGS} -X GET https://keycloak.${CLUSTER_FQDN}/admin/realms/master/users -H "Authorization: Bearer ${jwt_token}"|jq -r '.[] | select(.username and .email and .id) | "| \(.username) | \(.email) | \(.id)"'
+}
 
+
+# Usage: delete_keycloak_user <username> <cluster_fqdn> <admin_token>
 function delete_keycloak_user() {
     local username=$1
     local admin_token=$3

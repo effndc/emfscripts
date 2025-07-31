@@ -27,7 +27,7 @@ AUTO_COLLECT_VARS=true
 # Collect FQDN:
 if [ "${AUTO_COLLECT_VARS}" = "true" ]; then
     CLUSTER_FQDN=$(kubectl get configmap -n orch-gateway kubernetes-docker-internal -o yaml | yq '.data.dnsNames' | head -1 | sed 's/^- //')
-    echo Cluster FQDN Detected as ${CLUSTER_FQDN}
+    echo -e "${CYAN}Cluster FQDN Detected as ${CLUSTER_FQDN} ${NC}"
 
     # Collect Keycloak Admin Password:
     KC_ADMINUSER=admin

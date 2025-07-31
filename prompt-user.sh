@@ -26,27 +26,31 @@ prompt_project () {
 prompt_org_admin_pass () {
   # check if variables exist
   if [ -z "${ORG_ADMIN_PASS+xxx}" ]; then
-    echo -e "${CYAN} Org Admin account will be created as ${org_name}-admin"
+    echo -e "${CYAN} Project/Org Admin account will be created as ${org_name}-admin"
     echo -e "${RED}"
     echo -e "Password complexity policy can be viewed at https://keycloak.${CLUSTER_FQDN}/admin/master/console/#/master/authentication/policies " 
+    echo -e "If adding to existing Org with pre-existing user, please input the same password as before."
+    echo -e "If creating a new Org, please input a secure password."
+    echo -e "Sample password: MyInsecurePassw0rd!"
     echo -e "${GREEN}"
     read -p '??? Provide requested user password :  ' ORG_ADMIN_PASS
     echo -e "${NC}"
   else
-    echo -e "${CYAN}Organization admin will be created as ${org_name}-admin with password ${pass} ${NC}" 
+    echo -e "${CYAN}Organization admin will be created as ${org_name}-admin with password ${ORG_ADMIN_PASS} ${NC}" 
   fi
   }
 prompt_org_user_pass () {
   # check if variables exist
   if [ -z "${ORG_USER_PASS+xxx}" ]; then
-    echo -e "${CYAN} Org Admin account will be created as ${org_name}-user"
+    echo -e "${CYAN} Org/Project user account will be created as ${org_name}-user"
     echo -e "${RED}"
     echo -e "Password complexity policy can be viewed at https://keycloak.${CLUSTER_FQDN}/admin/master/console/#/master/authentication/policies " 
+    echo -e "Sample password: MyInsecurePassw0rd!"
     echo -e "${GREEN}"
     read -p '??? Provide requested user password :  ' ORG_USER_PASS
     echo -e "${NC}"
   else
-    echo -e "${CYAN}Organization admin will be created as ${org_name}-admin with password ${pass} ${NC}" 
+    echo -e "${CYAN}Organization admin will be created as ${org_name}-admin with password ${ORG_USER_PASS} ${NC}" 
   fi
   }
 
