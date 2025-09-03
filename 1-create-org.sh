@@ -19,8 +19,11 @@ NC='\033[0m' # No Color
 
 # source KC utils
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# shellcheck source="./user-variables.sh" 
 source "$DIR/user-variables.sh" 
+# shellcheck source="./kc-utils.sh"
 source "${DIR}/kc-utils.sh"
+# shellcheck source=./prompt-user.sh
 source "${DIR}/prompt-user.sh"
 
 # Prompt if credentials missing
@@ -37,7 +40,7 @@ api_token ${KC_ADMINUSER} ${KC_ADMIN_PASSWORD} ${CLUSTER_FQDN}
 get_keycloak_user_id ${KC_ADMINUSER} ${CLUSTER_FQDN} ${api_token}
 addGroupToKeycloakUser ${api_token} ${user_id} org-admin-group ${CLUSTER_FQDN}
 
-# Refresh token with new groups, create org and org admin user
+# Refresh KC Admin token with new groups, create org and org admin user
 api_token ${KC_ADMINUSER} ${KC_ADMIN_PASSWORD} ${CLUSTER_FQDN}
 createOrg ${org_name} ${CLUSTER_FQDN} ${api_token}
 createOrgAdmin  ${org_name} ${CLUSTER_FQDN} ${api_token}

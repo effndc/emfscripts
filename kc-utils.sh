@@ -30,7 +30,7 @@ function api_token() {
   local client_id="${5:-system-client}"     # Default to 'system-client' if not provided
   local scope="${6:-openid}"                # Default to 'openid' if not provided
 
-  api_token=$(curl ${CURL_FLAGS} -s -X POST \
+  api_token=$(curl "${CURL_FLAGS}" -s -X POST \
     "https://keycloak.${cluster_fqdn}/realms/${realm}/protocol/openid-connect/token" \
     -d "username=${user}" \
     -d "password=${pass}" \
@@ -56,7 +56,7 @@ function createOrg() {
   echo -e "${CYAN}Creating Organization ${org_name} ${NC}"
 
   tmp="$(mktemp)"
-  http_code=$(curl ${CURL_FLAGS} -o "$tmp" -w "%{http_code}" -X PUT "https://api.${cluster_fqdn}/v1/orgs/${org_name}" -H "accept: application"  -H "Authorization: Bearer ${jwt_token}" -H "Content-Type: application/json" -d "{\"description\":\"${org_name}\"}")
+  http_code=$(curl "${CURL_FLAGS}" -o "$tmp" -w "%{http_code}" -X PUT "https://api.${cluster_fqdn}/v1/orgs/${org_name}" -H "accept: application"  -H "Authorization: Bearer ${jwt_token}" -H "Content-Type: application/json" -d "{\"description\":\"${org_name}\"}")
 
   # if http_code is not 200, print the error message
   if [ "$http_code" -ne 200 ]; then
@@ -68,12 +68,12 @@ function createOrg() {
 
   rm "$tmp"
 
-  while [ "$(curl ${CURL_FLAGS} --location "https://api.${cluster_fqdn}/v1/orgs/${org_name}" -H "accept: application/json" -H "Content-Type: application" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.orgStatus.statusIndicator)" != "STATUS_INDICATION_IDLE" ]; do
+  while [ "$(curl "${CURL_FLAGS}" --location "https://api.${cluster_fqdn}/v1/orgs/${org_name}" -H "accept: application/json" -H "Content-Type: application" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.orgStatus.statusIndicator)" != "STATUS_INDICATION_IDLE" ]; do
     echo "Waiting for ${org_name} to be provisioned..."
     sleep 5
   done
 
-  org_uuid=$(curl ${CURL_FLAGS} --location "https://api.${cluster_fqdn}/v1/orgs/${org_name}" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.orgStatus.uID)
+  org_uuid=$(curl "${CURL_FLAGS}" --location "https://api.${cluster_fqdn}/v1/orgs/${org_name}" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.orgStatus.uID)
   if [ "$org_uuid" == "null" ]; then
     echo -e "${RED}Cannot retrieve Org UID for ${org_name} ${NC}" >&2
     exit 1
@@ -153,7 +153,7 @@ function createProjectAdmin() {
     read -p '??? Provide requested user password :  ' ORG_ADMIN_PASS
     echo -e "${NC}"
   else
-    echo -e "${CYAN}Organization admin will be created as ${org_name}-admin with password ${pass} ${NC}" 
+    echo -e "${CYAN}Organization admin will be created as ${org_name}-admin with password ${ORG_ADMIN_PASS} ${NC}" 
   fi
 
   proj_admin_user_id=$(createKeycloakUser "${jwt_token}" "${username}" "${ORG_ADMIN_PASS}" "${cluster_fqdn}")
@@ -163,7 +163,7 @@ function createProjectAdmin() {
     addGroupToKeycloakUser "${jwt_token}" "${proj_admin_user_id}" "${group}" "${cluster_fqdn}"
   done
   echo -e "${CYAN}Project Admin user ${username} has been successfully created for orchestrator Organization ${org_name} ${NC}"
-  echo -e "${CYAN}You may now login to https://web-ui.${cluster_fqdn} with this user and password: ${pass} ${NC}"
+  echo -e "${CYAN}You may now login to https://web-ui.${cluster_fqdn} with this user and password: ${ORG_ADMIN_PASS} ${NC}"
 }
 
 # Create Project User 
@@ -174,13 +174,13 @@ function createProjectUser() {
   local project_name=$3
   local cluster_fqdn=$4
   local jwt_token=$5 # User token with permission to read projects in the org
-  local admin_token=$6 # Admin token with permissions to create users in keycloakt-that-takes-optional-input-arguments
-  local groups=$7
+  local admin_token=$6 # Admin token with permissions to create users in keycloak
+  #local groups=$7
 
-  if [[ -z "$groups" ]]; then
-      groups=("Edge-Manager-Group" "Edge-Onboarding-Group" "Edge-Operator-Group" "Host-Manager-Group")
-  fi
-
+  #if [[ -z "$groups" ]]; then
+  #    groups=("Edge-Manager-Group" "Edge-Onboarding-Group" "Edge-Operator-Group" "Host-Manager-Group")
+  #fi
+  groups=("Edge-Manager-Group" "Edge-Onboarding-Group" "Edge-Operator-Group" "Host-Manager-Group")
   echo -e "${CYAN}Creating Project User ${username} in project ${project_name} and org ${org_name} ${NC}"
   proj_uuid=$(curl ${CURL_FLAGS} --location "https://api.${cluster_fqdn}/v1/projects/${project_name}" -H "accept: application/json" -H "Content-Type: application" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.projectStatus.uID)
   if [ "$proj_uuid" == "null" ]; then
@@ -188,19 +188,19 @@ function createProjectUser() {
     exit 1
   fi
   
-  if [ -z "${org_user_pass+xxx}" ]; then
+  if [ -z "${ORG_USER_PASS+xxx}" ]; then
     echo -e "${GREEN}"
     read -p '??? Provide requested Org User password :  ' org_user_pass
     echo -e "${NC}"
   else
-    echo -e "${CYAN}Organization admin will be created as ${org_name} with password ${pass} ${NC}" 
+    echo -e "${CYAN}Organization admin will be created as ${org_name} with password ${ORG_USER_PASS} ${NC}" 
   fi
 
   user_id=$(createKeycloakUser "${admin_token}" "${username}" "${ORG_USER_PASS}" "${cluster_fqdn}")
   for group in "${groups[@]}"; do
     addGroupToKeycloakUser "${admin_token}" "${user_id}" "${proj_uuid}_${group}" "${cluster_fqdn}"
   done
-  echo -e "${CYAN}Project User ${proj_admin_user} has been successfully created in ${project_name} ${NC}"
+  echo -e "${CYAN}Project User ${username} has been successfully created in ${project_name} ${NC}"
 }
 
 # Create KeyCloakUser

@@ -29,11 +29,12 @@ KC_ADMIN_TOKEN=$(api_token "${KC_ADMINUSER}" "${KC_ADMIN_PASSWORD}" "${CLUSTER_F
 echo -e "${CYAN} Please get the name of of an Organization to create a Project in:${NC}"
 
 # Usage getOrgs <cluster_fqdn> <jwt_token
-getOrgs ${CLUSTER_FQDN} ${KC_ADMIN_TOKEN}
+getOrgs "${CLUSTER_FQDN}" "${KC_ADMIN_TOKEN}"
 
 # Prompt for Organization name
 prompt_org
 # Prompt for Organization password for user accounts
+echo -e "${RED} !!!! NOTE:  In this next prompt you must provide the password for the previously created OrgAdmin account \n !!!!  The password must match the one previously configured ${NC}"
 prompt_org_admin_pass
 prompt_org_user_pass
 # Prompt for Oganization name
@@ -45,16 +46,16 @@ ORGADMIN_TOKEN=$(api_token "${org_name}-admin" "${ORG_ADMIN_PASS}" "${CLUSTER_FQ
 
 # 3 createProjectInOrg org_name project_name cluster_fqdn jwt_token
 # Usage: createProjectInOrg <org_name> <project_name> <cluster_fqdn> <jwt_token>
-createProjectInOrg ${org_name} ${project_name} ${CLUSTER_FQDN} ${ORGADMIN_TOKEN} 
+createProjectInOrg "${org_name}" "${project_name}" "${CLUSTER_FQDN}" "${ORGADMIN_TOKEN}"
 
 # 4 Create Project Admin
 # Usage: createProjectAdmin <username> <org_name> <cluster_fqdn> <jwt_token>
-createProjectAdmin ${org_name}-${project_name}-admin ${org_name} ${CLUSTER_FQDN} ${KC_ADMIN_TOKEN} 
-# 5 Create Project User 
-# Usage: createProjectUser <username> <org_name> <project_name> <cluster_fqdn> <jwt_token> [admin_token] [groups]
-createProjectUser ${org_name}-${project_name}-user ${org_name} ${CLUSTER_FQDN} ${KC_ADMIN_TOKEN} 
+createProjectAdmin "${org_name}-${project_name}-admin" "${org_name}" "${CLUSTER_FQDN}" "${KC_ADMIN_TOKEN}"
 
+# 5 Create Project User 
+# Usage: createProjectUser <username> <org_name> <project_name> <cluster_fqdn> <jwt_token> <org_admin_token>
+createProjectUser "${org_name}-${project_name}-user" "${org_name}" "${project_name}" "${CLUSTER_FQDN}" "${ORGADMIN_TOKEN}" "${KC_ADMIN_TOKEN}"
 
 echo -e "${GREEN}Project ${NC} ${project_name} ${GREEN} and Organization users created successfully.${NC}"
 echo -e "${GREEN}You may now login at ${NC}http://web-ui.${CLUSTER_FQDN}"
-echo -e "${RED}Next step is create your Locations and Regions and then you are ready to onboard nodes and deploy apps" 
+echo -e "${RED}Next step is create your Locations and Regions and then you are ready to onboard nodes and deploy apps${NC}" 
