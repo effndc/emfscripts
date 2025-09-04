@@ -43,3 +43,5 @@ This script is a collection of functions that are re-used within the "create" sc
 # Acknowledgement
 
 I cannot take credit for creation of these scripts alone, many friends and former colleagues had created the initial version of the scripts for use within our internal development and test labs.  I took their work and further enhanced them to make them more flexible and end-user oriented.
+
+Some assistance was provided by locally host LLM or GitHub Copilot.
