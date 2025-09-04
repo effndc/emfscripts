@@ -2,7 +2,7 @@
 
 A collection of scripts to accelerate how quickly a clean install of the [Edge Manageability Framework](https://github.com/open-edge-platform/edge-manageability-framework), within [Intel's Open Edge Platform](https://github.com/open-edge-platform), can be ready for use.
 
-> NOTE: Scripts are released as-is with no implied support by Intel.  Use at your own risk, tests have had limited testing by myself.
+> NOTE: Scripts are released as-is with no implied support by Intel.  Use at your own risk, I have done limited testing and some default linting.
 
 This is not intended to replace any user documentation which can be found here https://docs.openedgeplatform.intel.com/edge-manage-docs/ 
 
