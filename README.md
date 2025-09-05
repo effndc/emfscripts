@@ -33,6 +33,8 @@ CLUSTER_FQDN is to set the CLUSTER_FQDN for the orchestrator deployment, this is
 KC_ADMINUSER is the Keycloak administrative user account, the default username is `admin`.
 KC_ADMIN_PASSWORD is the password for this administrative account, if this has not been manually changed the script will query it from the kubernetes secrets.
 
+AUTO_COLLECT_VARS when set to true (default) the script will use kubectl to query for the above data, but will only work when executed in on the orchestrator node itself.
+
 > NOTE: The remaining scripts should not be modified other than to fix or improve the functionality.
 
 ### `1-create-org.sh`

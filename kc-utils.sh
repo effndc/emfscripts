@@ -99,7 +99,7 @@ function createOrgAdmin {
     echo -e "${RED}Failed to create admin user ${org_admin_user} in Keycloak ${NC}" >&2
     exit 1
   fi
-  org_project_manager_group_uid=$(curl ${CURL_FLAGS} -X GET "https://keycloak.${cluster_fqdn}/admin/realms/master/groups?search=${org_uuid}_Project-Manager-Group" -H "Authorization: Bearer ${jwt_token}" | jq -r '.[0].id')
+  org_project_manager_group_uid=$(curl "${CURL_FLAGS}" -X GET "https://keycloak.${cluster_fqdn}/admin/realms/master/groups?search=${org_uuid}_Project-Manager-Group" -H "Authorization: Bearer ${jwt_token}" | jq -r '.[0].id')
   if [ "$org_project_manager_group_uid" == "null" ]; then
       echo -e "${RED}Project Manager group not found in Keycloak for org ${org_name} (${org_uuid}, Organization creation may have failed ${NC}" >&2
       exit 1
@@ -124,9 +124,9 @@ function createProjectInOrg() {
     local project_name=$2
     local cluster_fqdn=$3
     local jwt_token=$4
-    curl ${CURL_FLAGS} -X PUT "https://api.${cluster_fqdn}/v1/projects/${project_name}" -H "accept: application/json" -H "Authorization: Bearer ${jwt_token}" -H "Content-Type: application/json" -d "{\"description\":\"${project_name}\"}"
+    curl "${CURL_FLAGS}" -X PUT "https://api.${cluster_fqdn}/v1/projects/${project_name}" -H "accept: application/json" -H "Authorization: Bearer ${jwt_token}" -H "Content-Type: application/json" -d "{\"description\":\"${project_name}\"}"
 
-    while [ "$(curl ${CURL_FLAGS} --location "https://api.${cluster_fqdn}/v1/projects/${project_name}" -H "accept: application/json" -H "Content-Type: application" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.projectStatus.statusIndicator)" != "STATUS_INDICATION_IDLE" ]; do
+    while [ "$(curl "${CURL_FLAGS}" --location "https://api.${cluster_fqdn}/v1/projects/${project_name}" -H "accept: application/json" -H "Content-Type: application" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.projectStatus.statusIndicator)" != "STATUS_INDICATION_IDLE" ]; do
       echo "Waiting for ${project_name} to be provisioned..."
       sleep 5
     done
@@ -141,7 +141,7 @@ function createProjectAdmin() {
   local jwt_token=$4 # Admin token with permissions to create users in keycloak and read orgs
 
   echo -e "${CYAN}Creating Project Admin ${username} in org ${org_name} ${NC}"
-  org_uuid=$(curl ${CURL_FLAGS} --location "https://api.${cluster_fqdn}/v1/orgs/${org_name}" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.orgStatus.uID)
+  org_uuid=$(curl "${CURL_FLAGS}" --location "https://api.${cluster_fqdn}/v1/orgs/${org_name}" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.orgStatus.uID)
   if [ "$org_uuid" == "null" ]; then
     echo -e "${RED}Cannot retrieve Org UID for ${org_name} ${NC}" >&2
     exit 1
@@ -182,7 +182,7 @@ function createProjectUser() {
   #fi
   groups=("Edge-Manager-Group" "Edge-Onboarding-Group" "Edge-Operator-Group" "Host-Manager-Group")
   echo -e "${CYAN}Creating Project User ${username} in project ${project_name} and org ${org_name} ${NC}"
-  proj_uuid=$(curl ${CURL_FLAGS} --location "https://api.${cluster_fqdn}/v1/projects/${project_name}" -H "accept: application/json" -H "Content-Type: application" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.projectStatus.uID)
+  proj_uuid=$(curl "${CURL_FLAGS}" --location "https://api.${cluster_fqdn}/v1/projects/${project_name}" -H "accept: application/json" -H "Content-Type: application" -H "Authorization: Bearer ${jwt_token}" | jq -r .status.projectStatus.uID)
   if [ "$proj_uuid" == "null" ]; then
     echo -e "${RED}Cannot retrieve Project UID for ${project_name} in ${org_name} ${NC}" >&2
     exit 1
@@ -210,7 +210,7 @@ function createKeycloakUser() {
   local username=$2
   local password=$3
   local cluster_fqdn=$4
-  curl ${CURL_FLAGS} -X POST "https://keycloak.${cluster_fqdn}/admin/realms/master/users" \
+  curl "${CURL_FLAGS}" -X POST "https://keycloak.${cluster_fqdn}/admin/realms/master/users" \
        -H "Content-Type: application/json" \
        -H "Authorization: Bearer ${token}" \
        -d '{
@@ -224,7 +224,7 @@ function createKeycloakUser() {
                  "temporary": false
              }]
            }' > /dev/null
-  curl ${CURL_FLAGS} -X GET "https://keycloak.${cluster_fqdn}/admin/realms/master/users?username=${username}" -H "Authorization: Bearer ${token}" | jq -r '.[0].id'
+  curl "${CURL_FLAGS}" -X GET "https://keycloak.${cluster_fqdn}/admin/realms/master/users?username=${username}" -H "Authorization: Bearer ${token}" | jq -r '.[0].id'
 }
 
 # Add User to Groups in KeyCloak 
@@ -235,14 +235,14 @@ function OFFaddGroupToKeycloakUser() {
   local group_name=$3
   local cluster_fqdn=$4
   echo -e "${CYAN}Adding user to group ${group_name} ${NC} "
-  group_id=$(curl ${CURL_FLAGS} -X GET "https://keycloak.${cluster_fqdn}/admin/realms/master/groups?search=${group_name}" -H "Authorization: Bearer ${token}" | jq -r '.[0].id')
+  group_id=$(curl "${CURL_FLAGS}" -X GET "https://keycloak.${cluster_fqdn}/admin/realms/master/groups?search=${group_name}" -H "Authorization: Bearer ${token}" | jq -r '.[0].id')
   #TODO
   # if group_id is null, exit with error
   if [ "$group_id" == "null" ]; then
     echo -e "${RED}Failed to find ${group_name} group in Keycloak ${NC}" >&2
     exit 1
   fi
-  curl ${CURL_FLAGS} -X PUT "https://keycloak.${cluster_fqdn}/admin/realms/master/users/${user_id}/groups/${group_id}" \
+  curl "${CURL_FLAGS}" -X PUT "https://keycloak.${cluster_fqdn}/admin/realms/master/users/${user_id}/groups/${group_id}" \
        -H "Authorization: Bearer ${token}" \
        -H "Content-Type: application/json" \
        -d '{}'
@@ -275,8 +275,8 @@ function addGroupToKeycloakUser() {
 function getOrgs() {
   local cluster_fqdn=$1
   local jwt_token=$2
-  orgs_list=$(curl ${CURL_FLAGS} -X GET "https://api.${cluster_fqdn}/v1/orgs" -H "accept: application/json" -H "Authorization: Bearer ${jwt_token}" -H "Content-Type: application/json" |  jq '.[].name' )
-  echo ${orgs_list}
+  orgs_list=$(curl "${CURL_FLAGS}" -X GET "https://api.${cluster_fqdn}/v1/orgs" -H "accept: application/json" -H "Authorization: Bearer ${jwt_token}" -H "Content-Type: application/json" |  jq '.[].name' )
+  echo "${orgs_list}"
 }
 
 # Usage: deleteOrg <org_name> <cluster_fqdn> <jwt_token>
@@ -286,7 +286,7 @@ function deleteOrg() {
   local jwt_token=$3
 
   echo -e "${CYAN}Deleting Organization ${org_name} ${NC}"
-  response=$(curl ${CURL_FLAGS} -o /dev/null -w "%{http_code}" -X DELETE "https://api.${cluster_fqdn}/v1/orgs/${org_name}" \
+  response=$(curl "${CURL_FLAGS}" -o /dev/null -w "%{http_code}" -X DELETE "https://api.${cluster_fqdn}/v1/orgs/${org_name}" \
         -H "Authorization: Bearer ${jwt_token}")
 
     if [ "$response" -eq 200 ]; then
@@ -305,7 +305,7 @@ function getProjects () {
   local jwt_token=$2
   echo -e "${CYAN}Retrieving all projects ${NC}"
   echo "| Project Name | Project UID |"
-  curl ${CURL_FLAGS} -X GET "https://api.${cluster_fqdn}/v1/projects" -H "Authorization: Bearer ${jwt_token}" | jq -r '.[] | select(.name and .status.projectStatus.uID) | "| \(.name) | \(.status.projectStatus.uID)"'
+  curl "${CURL_FLAGS}" -X GET "https://api.${cluster_fqdn}/v1/projects" -H "Authorization: Bearer ${jwt_token}" | jq -r '.[] | select(.name and .status.projectStatus.uID) | "| \(.name) | \(.status.projectStatus.uID)"'
 }
 
 # Usage: deleteProject <project_name> <cluster_fqdn> <jwt_token>
@@ -315,7 +315,7 @@ function deleteProject() {
   local cluster_fqdn=$2
   local jwt_token=$3
   echo -e "${CYAN}Deleting Project ${project_name} ${NC}"
-  response=$(curl ${CURL_FLAGS} -o /dev/null -w "%{http_code}" -X DELETE "https://api.${cluster_fqdn}/v1/projects/${project_name}" \
+  response=$(curl "${CURL_FLAGS}" -o /dev/null -w "%{http_code}" -X DELETE "https://api.${cluster_fqdn}/v1/projects/${project_name}" \
         -H "Authorization: Bearer ${jwt_token}")
     if [ "$response" -eq 200 ]; then
         echo "Project ${project_name} deleted successfully."
@@ -348,7 +348,7 @@ function getkcUsers() {
   local jwt_token=$2
   echo "${CYAN}Retrieving all Keycloak users ${NC}"
   echo "| Username      | Email          | UID                  |"
-  curl ${CURL_FLAGS} -X GET https://keycloak.${CLUSTER_FQDN}/admin/realms/master/users -H "Authorization: Bearer ${jwt_token}"|jq -r '.[] | select(.username and .email and .id) | "| \(.username) | \(.email) | \(.id)"'
+  curl "${CURL_FLAGS}" -X GET https://keycloak.${CLUSTER_FQDN}/admin/realms/master/users -H "Authorization: Bearer ${jwt_token}"|jq -r '.[] | select(.username and .email and .id) | "| \(.username) | \(.email) | \(.id)"'
 }
 
 
@@ -359,9 +359,9 @@ function delete_keycloak_user() {
     local cluster_fqdn=$2
 
     # Fetch user ID by username
-    local userid=$(get_keycloak_user_id $username $cluster_fqdn $admin_token)
+    local userid=$(get_keycloak_user_id "$username" "$cluster_fqdn" "$admin_token")
 
-    response=$(curl ${CURL_FLAGS} -o /dev/null -w "%{http_code}" -X DELETE "https://keycloak.${cluster_fqdn}/admin/realms/master/users/${userid}" \
+    response=$(curl "${CURL_FLAGS}" -o /dev/null -w "%{http_code}" -X DELETE "https://keycloak.${cluster_fqdn}/admin/realms/master/users/${userid}" \
         -H "Authorization: Bearer ${admin_token}")
 
     if [ "$response" -eq 204 ]; then
