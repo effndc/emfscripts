@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2086
-# Version 2024ww37.5
+# Version 2025ww38.2
+
+# SPDX-FileCopyrightText: 2025 @effndc
+#
+# SPDX-License-Identifier: Apache-2.0
+
 set -euo pipefail
 
 # How to use:

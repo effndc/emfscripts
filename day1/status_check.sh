@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2025 @effndc
+#
+# SPDX-License-Identifier: Apache-2.0
+
 echo "Please review any of the listed applications or pods"
 echo ""
 echo "Out-of-sync Applications:"
