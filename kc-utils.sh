@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# Note: Many functions exist that are not used or tested at this time
+
 CYAN='\033[0;36m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
@@ -42,8 +44,9 @@ function api_token() {
     echo -e "${RED}Cannot retrieve API Token from $cluster_fqdn for user ${user} in realm ${realm} ${NC}" >&2
     exit 1
   fi
+  #print token for re-use in manual API calls for testing 
   #echo "Authentication token retrieved for ${user} in realm ${realm}"
-  echo "$api_token"
+  #echo "$api_token"
 }
 
 # Create Org in Orchestrator

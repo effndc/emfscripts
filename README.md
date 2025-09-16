@@ -53,6 +53,10 @@ This script supports creating Projects within an existing Organization.  It will
 
 This script is a collection of functions that are re-used within the "create" scripts.
 
+## To Do
+
+Depending on how the product roadmap evolves and features within the `orch-cli` provide more coverage I may add the ability to create custom user accounts and to select which Organization, Project, and "role types" to add them to.
+
 ## Acknowledgement
 
 I cannot take credit for creation of these scripts alone, many friends and former colleagues had created the initial version of the scripts for use within our internal development and test labs.  I took their work and further enhanced them to make them more flexible and end-user oriented.
