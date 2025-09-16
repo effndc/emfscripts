@@ -14,10 +14,10 @@ set -euo pipefail
 # Remove commenting to debug 
 # set -x
 # Define empty variables, for rapid re-usability you can input values here
-NODE_BMC_IP="172.16.0.254"
+NODE_BMC_IP=""
 NODE_BMC_USER="root"
-NODE_BMC_PWD="calvin"
-CLUSTER_FQDN="a.tiberedge.com"
+NODE_BMC_PWD=""
+CLUSTER_FQDN=""
 #CLUSTER_FQDN="staging04.espdstage.infra-host.com"
 NICSLOT=""
 
