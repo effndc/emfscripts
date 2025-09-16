@@ -44,9 +44,8 @@ function api_token() {
     echo -e "${RED}Cannot retrieve API Token from $cluster_fqdn for user ${user} in realm ${realm} ${NC}" >&2
     exit 1
   fi
-  #print token for re-use in manual API calls for testing 
   #echo "Authentication token retrieved for ${user} in realm ${realm}"
-  #echo "$api_token"
+  echo "$api_token"
 }
 
 # Create Org in Orchestrator
