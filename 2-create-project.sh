@@ -57,5 +57,5 @@ createProjectAdmin "${org_name}-${project_name}-admin" "${org_name}" "${CLUSTER_
 createProjectUser "${org_name}-${project_name}-user" "${org_name}" "${project_name}" "${CLUSTER_FQDN}" "${ORGADMIN_TOKEN}" "${KC_ADMIN_TOKEN}"
 
 echo -e "${GREEN}Project ${NC} ${project_name} ${GREEN} and Organization users created successfully.${NC}"
-echo -e "${GREEN}You may now login at ${NC}http://web-ui.${CLUSTER_FQDN} as ${org_name}-${project_name}-user"
+echo -e "${GREEN}You may now login at ${NC}http://web-ui.${CLUSTER_FQDN}"
 echo -e "${RED}Next step is create your Locations and Regions and then you are ready to onboard nodes and deploy apps${NC}" 
