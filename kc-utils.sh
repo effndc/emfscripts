@@ -45,7 +45,7 @@ function api_token() {
     exit 1
   fi
   #echo "Authentication token retrieved for ${user} in realm ${realm}"
-  echo "$api_token"
+  #echo "$api_token"
 }
 
 # Create Org in Orchestrator

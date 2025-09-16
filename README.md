@@ -13,6 +13,8 @@ Highlevel actions intended to be supported:
 * Creating Projects within Organizations and associated user accounts with necessary roles
 * Deleting Organizations
 
+[Please also see my blog post for further detail](https://effndc.medium.com/edge-manageability-frameworks-multi-tenancy-barrier-to-use-dcd89cb1a86d).
+
 ## Usage
 
 Execute the scripts when needed, you may need to `chmod +x *.sh` and then run `./1-create-org.sh` to create an Organization or `./2-create-project.sh` to create Projects within an Organization.
