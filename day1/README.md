@@ -4,4 +4,6 @@ These scripts are what I leverage in ny lab during day-to-day operations.
 
 `status_check.sh` checks all of the installed applications for unexpected states.
 
-`dell_node_config_boot.sh` used iDRAC to configure a Dell Xeon server for HTTPSboot based onboarding with the orchestrator.
+`dell_node_config_boot.sh` used iDRAC to configure a Dell Xeon server for HTTPSboot based onboarding with the orchestrator. Execute with -h for help, you can define variables for rapid-reuse at top of file.
+
+> NOTE: Requires Dell iDRAC tools (racadm) to be installed.
