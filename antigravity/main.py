@@ -241,14 +241,14 @@ def create_project(
         onboarding_pass = ask_password(f"Password for {onboarding_user}")
         
         with get_spinner(f"Creating Onboarding User {onboarding_user}...") as p:
-            uid = kc.create_user(onboarding_user, onboarding_pass)
+            uid = kc_admin.create_user(onboarding_user, onboarding_pass)
             
             # Assign Onboarding Group
             g_name = f"{proj_uuid}_Edge-Onboarding-Group"
-            g = poll_until(lambda: kc.get_group_by_path(g_name), lambda x: x, description="Group Sync")
+            g = poll_until(lambda: kc_admin.get_group_by_path(g_name), lambda x: x, description="Group Sync")
             
-            kc.validate_user_constraints(uid, g_name)
-            kc.add_user_to_group(uid, g["id"])
+            kc_admin.validate_user_constraints(uid, g_name)
+            kc_admin.add_user_to_group(uid, g["id"])
         console.print(f"[green]✓ Onboarding User {onboarding_user} created[/green]")
 
         # B. Update Org Admin (Add all EXCEPT Onboarding)
@@ -257,8 +257,8 @@ def create_project(
         
         oa_id = None
         try:
-             # Find user ID
-             users = kc.search_users(org_admin_name)
+             # Find user ID - Use kc_admin (Platform Admin)
+             users = kc_admin.search_users(org_admin_name)
              for u in users:
                  if u["username"] == org_admin_name:
                      oa_id = u["id"]
@@ -274,11 +274,15 @@ def create_project(
             with get_spinner("Assigning groups to Org Admin...") as p:
                 for suffix in groups_to_add:
                     g_name = f"{proj_uuid}_{suffix}"
-                    g = kc.get_group_by_path(g_name)
+                    # Use polling because groups creation is async by EMF-Orchestrator
+                    g = poll_until(lambda: kc_admin.get_group_by_path(g_name), lambda x: x, description=f"Sync {suffix}")
+                    
                     if g:
                         try:
-                            kc.validate_user_constraints(oa_id, g_name)
-                            kc.add_user_to_group(oa_id, g["id"])
+                            # Note: Org Admin might have other project groups, so simple constraint check needs care.
+                            # But standard constraints allow multiple projects, just restricted Onboarding/Org.
+                            kc_admin.validate_user_constraints(oa_id, g_name)
+                            kc_admin.add_user_to_group(oa_id, g["id"])
                         except Exception as e:
                             console.print(f"[yellow]Skipped {g_name}: {e}[/yellow]")
             console.print(f"[green]✓ Org Admin updated[/green]")
