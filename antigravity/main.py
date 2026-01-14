@@ -94,7 +94,11 @@ def ask_password(prompt_text: str) -> str:
             console.print(f"[bold cyan]Password Policy: {policy}[/bold cyan]")
         except:
             pass
-    return Prompt.ask(prompt_text, password=True)
+    while True:
+        pwd = Prompt.ask(prompt_text, password=True)
+        if pwd:
+            return pwd
+        console.print("[red]Password cannot be empty.[/red]")
 
 @org_app.command("create")
 def create_org(
