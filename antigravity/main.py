@@ -96,9 +96,16 @@ def ask_password(prompt_text: str) -> str:
             pass
     while True:
         pwd = Prompt.ask(prompt_text, password=True)
-        if pwd:
-            return pwd
-        console.print("[red]Password cannot be empty.[/red]")
+        if not pwd:
+            console.print("[red]Password cannot be empty.[/red]")
+            continue
+            
+        pwd_confirm = Prompt.ask("Confirm Password", password=True)
+        if pwd != pwd_confirm:
+            console.print("[red]Passwords do not match. Please try again.[/red]")
+            continue
+            
+        return pwd
 
 @org_app.command("create")
 def create_org(
