@@ -47,8 +47,8 @@ Create a `.env` file or pass these environment variables to the container:
     # Create an env file with CLUSTER_FQDN
     # The tool will automatically derive Keycloak and EMF URLs.
     docker run -it --rm --network host \
-        -e CLUSTER_FQDN="my.cluster.example.com" \
-        -e KEYCLOAK_ADMIN_PASS="admin_pass" \
+        -e CLUSTER_FQDN="a.tiberedge.com" \
+        -e KEYCLOAK_ADMIN_PASS="tojDUI>9@E))R|7(Mjk6E{yB4" \
         emf-manager org create
     ```
 

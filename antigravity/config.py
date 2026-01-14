@@ -31,7 +31,7 @@ class Config:
 
     # Polling Defaults
     POLL_INTERVAL: int = int(os.getenv("POLL_INTERVAL", "2"))
-    POLL_TIMEOUT: int = int(os.getenv("POLL_TIMEOUT", "60"))
+    POLL_TIMEOUT: int = int(os.getenv("POLL_TIMEOUT", "300"))
 
     @classmethod
     def validate(cls):
