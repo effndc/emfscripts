@@ -277,7 +277,7 @@ def create_project(
     create_default_users = Confirm.ask(f"Create default users for {project_name}?", default=True)
     if create_default_users:
         # A. Onboarding User
-        onboarding_user = f"{project_name}-onboard"
+        onboarding_user = f"{selected_org}-{project_name}-onboard"
         onboarding_pass = ask_password(f"Password for {onboarding_user}")
         
         with get_spinner(f"Creating Onboarding User {onboarding_user}...") as p:
