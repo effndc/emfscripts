@@ -532,16 +532,3 @@ def list_users(search: str = typer.Option(None, help="Search term (username, ema
 
 if __name__ == "__main__":
     app()
-                continue
-            
-            try:
-                kc.validate_user_constraints(user_id, g_name)
-                kc.add_user_to_group(user_id, g["id"])
-                console.print(f" - Added to {g_name}")
-            except Exception as e:
-                console.print(f"[red]Failed to add to {g_name}: {e}[/red]")
-
-    console.print("[green]Done[/green]")
-
-if __name__ == "__main__":
-    app()
