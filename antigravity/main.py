@@ -331,21 +331,60 @@ def create_project(
             console.print(f"[yellow]Org Admin {org_admin_name} not found, skipping update.[/yellow]")
 
 @project_app.command("list")
-def list_projects():
-    """List all Projects."""
+def list_projects(
+    org_name: str = typer.Option(None, help="Organization Name (skips prompt)"),
+    org_admin_pass: str = typer.Option(None, help="Password for Org Admin")
+):
+    """List Projects within an Organization (requires Org Admin)."""
     ensure_auth()
-    emf = state["emf"]
+    emf_global = state["emf"]
     
-    with get_spinner("Fetching Projects...") as p:
+    # 1. Select Org
+    with get_spinner("Fetching Organizations...") as p:
+        orgs = emf_global.list_orgs()
+    
+    if not orgs:
+        console.print("[red]No Organizations found.[/red]")
+        raise typer.Exit(1)
+        
+    org_names = list(orgs.keys())
+    selected_org = org_name
+    if not selected_org:
+        console.print("Available Organizations:")
+        for o in org_names:
+            console.print(f" - {o}")
+        selected_org = Prompt.ask("Select Organization", choices=org_names)
+    elif selected_org not in org_names:
+         console.print(f"[red]Organization {selected_org} not found.[/red]")
+         raise typer.Exit(1)
+         
+    # 2. Authenticate as Org Admin
+    org_admin_user = f"{selected_org}-admin"
+    if not org_admin_pass:
+        console.print(f"[yellow]To list projects in {selected_org}, we need {org_admin_user} credentials.[/yellow]")
+        org_admin_pass = ask_password(f"Password for {org_admin_user}", confirm=False)
+        
+    kc_org = KeycloakClient()
+    try:
+        with get_spinner(f"Authenticating as {org_admin_user}...") as p:
+             kc_org.login(username=org_admin_user, password=org_admin_pass)
+    except Exception as e:
+        console.print(f"[red]Failed to login as {org_admin_user}: {e}[/red]")
+        raise typer.Exit(1)
+
+    emf_org = EMFClient(kc_org.token)
+    
+    # 3. List Projects
+    with get_spinner(f"Fetching Projects for {selected_org}...") as p:
         p.add_task("Querying...")
-        projs = emf.list_projects(details=True)
+        projs = emf_org.list_projects(details=True)
         
     if not projs:
-        console.print("[yellow]No Projects found.[/yellow]")
+        console.print(f"[yellow]No Projects found in {selected_org}.[/yellow]")
         return
 
     from rich.table import Table
-    table = Table(title="Projects")
+    table = Table(title=f"Projects in {selected_org}")
     table.add_column("Name", style="magenta")
     table.add_column("UUID", style="dim")
     table.add_column("Status", style="green")
