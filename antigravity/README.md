@@ -1,4 +1,6 @@
-# Antigravity Multi-Tenancy Tool
+# Edge Manageability Framework: Multi-Tenancy Tool
+
+> NOTE: This tool is almost exclusively AI generated using Google Antigravity
 
 A robust, portable CLI tool for managing EMF multi-tenancy, ensuring consistency across Orchestrator and Keycloak.
 
