@@ -62,6 +62,19 @@ Create a `.env` file or pass these environment variables to the container:
     docker run -it --rm --network host --env-file .env emf-manager user manage
     ```
 
+### Interactive Shell Mode
+For faster operations, you can enter the container shell and run commands directly without restarting the container:
+
+```bash
+# Start shell
+docker run -it --rm --network host --env-file .env emf-manager bash
+
+# Inside the shell:
+python main.py org create
+python main.py project create
+python main.py user manage
+```
+
 ### Command Help
 Run with `--help` to see options:
 ```bash
