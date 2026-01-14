@@ -83,7 +83,7 @@ def ensure_auth():
             console.print("Ensure CLUSTER_FQDN (or KEYCLOAK_URL), KEYCLOAK_ADMIN_USER, KEYCLOAK_ADMIN_PASS are set.")
             sys.exit(1)
 
-def ask_password(prompt_text: str) -> str:
+def ask_password(prompt_text: str, confirm: bool = True) -> str:
     """Fetches password policy and prompts user."""
     kc = state.get("kc")
     # If not logged in, we can't get policy easily unless we use a temporary unrestricted client (rare).
@@ -99,6 +99,9 @@ def ask_password(prompt_text: str) -> str:
         if not pwd:
             console.print("[red]Password cannot be empty.[/red]")
             continue
+        
+        if not confirm:
+            return pwd
             
         pwd_confirm = Prompt.ask("Confirm Password", password=True)
         if pwd != pwd_confirm:
@@ -204,7 +207,7 @@ def create_project(
     org_admin_user = f"{selected_org}-admin"
     if not org_admin_pass:
         console.print(f"[yellow]To create a project in {selected_org}, we need {org_admin_user} credentials.[/yellow]")
-        org_admin_pass = ask_password(f"Password for {org_admin_user}")
+        org_admin_pass = ask_password(f"Password for {org_admin_user}", confirm=False)
 
     # Authenticate as Org Admin
     # Authenticate as Org Admin
