@@ -70,10 +70,34 @@ For faster operations, you can enter the container shell and run commands direct
 docker run -it --rm --network host --env-file .env emf-manager bash
 
 # Inside the shell:
+python main.py org list
 python main.py org create
+
+python main.py project list
 python main.py project create
+
+python main.py user list --search "onboard"
 python main.py user manage
 ```
+
+## Workflows
+
+### Organization
+*   **Create**: Creates an Org and a default `{org}-admin` user.
+*   **List**: Displays all organizations and their status.
+
+### Project
+*   **Create**: 
+    *   Authenticates as the Organization Admin (prompts for Org Admin password).
+    *   Creates Project in EMF.
+    *   Creates an Onboarding User (`{org}-{project}-onboard`).
+    *   Updates the Org Admin with project management permissions.
+*   **List**: Lists projects within a specific Organization (requires Org Admin authentication).
+
+### User
+*   **Manage**: Add or Update users with specific roles (Project Admin, Project User, etc.).
+    *   *Note*: When adding users to projects, the tool warns but allows multi-project membership within an Org.
+*   **List**: Search for users by username or email.
 
 ### Command Help
 Run with `--help` to see options:
