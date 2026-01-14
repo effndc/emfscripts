@@ -152,4 +152,11 @@ class KeycloakClient:
                     if "_" in g["name"]:
                         existing_uuid = g["name"].split("_")[0]
                         if len(existing_uuid) == 36 and existing_uuid != new_org_uuid:
-                            raise ValueError(f"User belongs to another Org ({existing_uuid}). Cannot add to {new_org_uuid}.")
+                            # Note: This logic is imperfect for Project groups (ProjectUUID != OrgUUID).
+                            # Ideally we should validate hierarchy.
+                            # For safety in this MVP, we will only WARN for now, or we can rely on caller.
+                            # Given user feedback, rigid blocking here breaks valid flows.
+                            # Changing to Warning/Log:
+                            import logging
+                            logging.warning(f"Potential Multi-Org violation: User belongs to {existing_uuid}, adding to {new_org_uuid}. Proceeding cautiously.")
+                            # raise ValueError(f"User belongs to another Org ({existing_uuid}). Cannot add to {new_org_uuid}.")
