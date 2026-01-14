@@ -75,15 +75,24 @@ class EMFClient:
         data = resp.json()
         return data.get("status", {}).get("projectStatus", {}).get("uID")
 
-    def list_orgs(self) -> Dict[str, str]:
-        """Returns name:uuid dict"""
+    def list_orgs(self, details: bool = False) -> Any:
+        """Returns name:uuid dict, or list of detailed dicts if details=True"""
         url = f"{self.base_url}/v1/orgs"
         resp = requests.get(url, headers=self._headers(), verify=Config.VERIFY_SSL)
         if resp.status_code != 200:
-            return {}
+            return [] if details else {}
         
-        # Schema says Listorg.Org returns list of objects with name, spec, status
         data = resp.json()
+        if details:
+            results = []
+            for item in data:
+                name = item.get("name")
+                status = item.get("status", {}).get("orgStatus", {})
+                uuid = status.get("uID")
+                indicator = status.get("statusIndicator")
+                results.append({"name": name, "uuid": uuid, "status": indicator})
+            return results
+
         orgs = {}
         for item in data:
             name = item.get("name")
@@ -92,14 +101,24 @@ class EMFClient:
                 orgs[name] = uuid
         return orgs
 
-    def list_projects(self) -> Dict[str, str]:
-        """Returns name:uuid dict"""
+    def list_projects(self, details: bool = False) -> Any:
+        """Returns name:uuid dict, or list of detailed dicts if details=True"""
         url = f"{self.base_url}/v1/projects"
         resp = requests.get(url, headers=self._headers(), verify=Config.VERIFY_SSL)
         if resp.status_code != 200:
-            return {}
+            return [] if details else {}
         
         data = resp.json()
+        if details:
+            results = []
+            for item in data:
+                name = item.get("name")
+                status = item.get("status", {}).get("projectStatus", {})
+                uuid = status.get("uID")
+                indicator = status.get("statusIndicator")
+                results.append({"name": name, "uuid": uuid, "status": indicator})
+            return results
+
         projects = {}
         for item in data:
             name = item.get("name")

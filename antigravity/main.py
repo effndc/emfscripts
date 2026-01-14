@@ -162,6 +162,32 @@ def create_org(
         
         console.print(f"[green]✓ User {admin_user} created and made Admin of {name}[/green]")
 
+@org_app.command("list")
+def list_orgs():
+    """List all Organizations."""
+    ensure_auth()
+    emf = state["emf"]
+    
+    with get_spinner("Fetching Organizations...") as p:
+        p.add_task("Querying...")
+        orgs = emf.list_orgs(details=True)
+        
+    if not orgs:
+        console.print("[yellow]No Organizations found.[/yellow]")
+        return
+
+    from rich.table import Table
+    table = Table(title="Organizations")
+    table.add_column("Name", style="cyan")
+    table.add_column("UUID", style="dim")
+    table.add_column("Status", style="green")
+    
+    for o in orgs:
+        status_str = o.get("status") or "Unknown"
+        table.add_row(o["name"], o["uuid"] or "N/A", status_str)
+        
+    console.print(table)
+
 @project_app.command("create")
 def create_project(
     project_name: str = typer.Option(..., prompt="Project Name"),
@@ -304,6 +330,32 @@ def create_project(
         else:
             console.print(f"[yellow]Org Admin {org_admin_name} not found, skipping update.[/yellow]")
 
+@project_app.command("list")
+def list_projects():
+    """List all Projects."""
+    ensure_auth()
+    emf = state["emf"]
+    
+    with get_spinner("Fetching Projects...") as p:
+        p.add_task("Querying...")
+        projs = emf.list_projects(details=True)
+        
+    if not projs:
+        console.print("[yellow]No Projects found.[/yellow]")
+        return
+
+    from rich.table import Table
+    table = Table(title="Projects")
+    table.add_column("Name", style="magenta")
+    table.add_column("UUID", style="dim")
+    table.add_column("Status", style="green")
+    
+    for p in projs:
+        status_str = p.get("status") or "Unknown"
+        table.add_row(p["name"], p["uuid"] or "N/A", status_str)
+        
+    console.print(table)
+
 @user_app.command("manage")
 def manage_user():
     """Add or Update a user with specific permissions."""
@@ -427,10 +479,59 @@ def manage_user():
     # 5. Apply
     with get_spinner("Applying permissions...") as p:
         for g_name in groups_to_add:
-            # Poll for group?
-            g = kc.get_group_by_path(g_name)
             if not g:
                 console.print(f"[yellow]Group {g_name} not found. Skipping.[/yellow]")
+                continue
+            
+            try:
+                # kc.validate_user_constraints(user_id, g_name) # Warn only now
+                kc.add_user_to_group(user_id, g["id"])
+                console.print(f" - Added to {g_name}")
+            except Exception as e:
+                console.print(f"[red]Failed to add to {g_name}: {e}[/red]")
+    
+    console.print("[green]Done.[/green]")
+
+@user_app.command("list")
+def list_users(search: str = typer.Option(None, help="Search term (username, email)")):
+    """List or search users."""
+    ensure_auth()
+    kc = state["kc"]
+    
+    query = search if search else ""
+    if not query:
+        # Prompt if empty? or just search all (empty string searches all in KC usually, or specific arg?)
+        # kc.search_users("") returns first 100 usually.
+        console.print("[dim]Fetching all users (limit might apply)...[/dim]")
+    else:
+        console.print(f"[dim]Searching for '{query}'...[/dim]")
+
+    with get_spinner("Fetching Users...") as p:
+        users = kc.search_users(query)
+    
+    if not users:
+        console.print("[yellow]No users found.[/yellow]")
+        return
+        
+    from rich.table import Table
+    table = Table(title="Users")
+    table.add_column("Username", style="cyan")
+    table.add_column("ID", style="dim")
+    table.add_column("Email", style="blue")
+    table.add_column("Enabled", style="green")
+    
+    for u in users:
+        table.add_row(
+            u.get("username", "N/A"), 
+            u.get("id", "N/A"), 
+            u.get("email", ""), 
+            str(u.get("enabled", False))
+        )
+    
+    console.print(table)
+
+if __name__ == "__main__":
+    app()
                 continue
             
             try:
