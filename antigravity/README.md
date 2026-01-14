@@ -25,15 +25,20 @@ Create a `.env` file or pass these environment variables to the container:
 | `VERIFY_SSL` | Verify SSL Certificates. Set to `false` for self-signed certs (not recommended). | No | `true` |
 | `POLL_TIMEOUT` | Seconds to wait for resource provisioning. | No | `60` |
 | `no_proxy` | Comma-separated domains to bypass proxy (crucial for internal clusters). | No | - |
+| `http_proxy` | Proxy URL for HTTP traffic. | No | - |
+| `https_proxy` | Proxy URL for HTTPS traffic. | No | - |
 
 ## Usage
 
 ### Prerequisites
 *   Docker or Podman
 
-> **Note**: If running behind a corporate proxy, ensure `no_proxy` includes your cluster domain.
+> **Note**: If running behind a corporate proxy, pass the proxy variables to the container. Ensure `no_proxy` includes your cluster domain.
 > ```bash
-> docker run -e no_proxy=$no_proxy ...
+> docker run \
+>   -e http_proxy=$http_proxy \
+>   -e https_proxy=$https_proxy \
+>   -e no_proxy=$no_proxy ...
 > ```
 
 ### Quick Start (Container)
