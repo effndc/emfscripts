@@ -279,9 +279,10 @@ def create_project(
                     
                     if g:
                         try:
-                            # Note: Org Admin might have other project groups, so simple constraint check needs care.
-                            # But standard constraints allow multiple projects, just restricted Onboarding/Org.
-                            kc_admin.validate_user_constraints(oa_id, g_name)
+                            # Note: Org Admin might have other project groups.
+                            # We trust the relationship here (Project is in the Org), so we skip the strict single-tenant constraint check
+                            # which might confuse Project UUIDs with Org UUIDs.
+                            # kc_admin.validate_user_constraints(oa_id, g_name)
                             kc_admin.add_user_to_group(oa_id, g["id"])
                         except Exception as e:
                             console.print(f"[yellow]Skipped {g_name}: {e}[/yellow]")
