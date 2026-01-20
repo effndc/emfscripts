@@ -15,11 +15,19 @@ set -euo pipefail
 # set -x
 # Define empty variables, for rapid re-usability you can input values here
 NODE_BMC_IP=""
-NODE_BMC_USER="root"
+NODE_BMC_USER=""
 NODE_BMC_PWD=""
 CLUSTER_FQDN=""
-#CLUSTER_FQDN="staging04.espdstage.infra-host.com"
 NICSLOT=""
+
+## Create ENV file for repated task
+## Create a .dellenv file with contents:
+# NODE_BMC_IP="1.2.3.4"
+# NODE_BMC_USER="root"
+# NODE_BMC_PWD="calvin"
+# CLUSTER_FQDN="mydomain.com"
+# NICSLOT=""
+
 
 # For easy iteration through hosts you can also excute from CLI by commenting out above
 # and un-commenting, run as './scriptname.sh CLUSTER_FQDN NODE_BMC_USER NODE_BMC_PWD NICSLOT NODE_BMC_IP'
@@ -28,6 +36,10 @@ NICSLOT=""
 #NODE_BMC_USER="$2"
 #NODE_BMC_PWD="$3"
 #CLUSTER_FQDN="$1"
+
+if [ -f ".dellenv" ]; then
+    source ".dellenv"
+fi
 
 # Sleep time for racadm tasks - setting too short and subsequent tasks in series may fail
 t=5
@@ -139,14 +151,19 @@ get_orch_certs() {
 
 # Configure EN BIOS System Security
 import_bios_certs() {
+  echo ">>> Importing TLS certificates and setting HTTPS Boot URL"
   prompt_user_idrac
-  echo ">>> Importing certificates into ${NODE_BMC_IP}"
-  racadm ${LOGIN} bioscert import -t 2 -k 0 -f ${CLUSTER_FQDN}-db.der
+  prompt_user_orchestrator
+  #echo ">>> Importing certificates into ${NODE_BMC_IP}"
+  #echo ">>>>>> # racadm bioscert import -t 2 -k 0 -f ${CLUSTER_FQDN}-db.der:"
+  #racadm ${LOGIN} bioscert import -t 2 -k 0 -f ${CLUSTER_FQDN}-db.der
   sleep $t
   #racadm ${LOGIN} bioscert view --all
+  echo " # racadm httpsbootcert import -i 1 -f ${CLUSTER_FQDN}-Full_server.crt "
   racadm ${LOGIN} httpsbootcert import -i 1 -f ${CLUSTER_FQDN}-Full_server.crt
   sleep $t
-  echo ">>> Setting Boot URL to ${IPXE_EFI}"
+  echo "> Setting Boot URL to ${IPXE_EFI}"
+  echo " # racadm set BIOS.HttpDev1Settings.HttpDev1Uri ${IPXE_EFI}"
   racadm ${LOGIN} set BIOS.HttpDev1Settings.HttpDev1Uri "${IPXE_EFI}"
   #racadm ${LOGIN} httpsbootcert view -i 1
   activate_settings
@@ -156,20 +173,28 @@ import_bios_certs() {
 set_bios_security() {
   # Reference https://www.dell.com/support/manuals/en-us/poweredge-xr12/pexr12_bios_ism_pub/system-security?guid=guid-24e63dd7-d56c-4146-a871-217d22f1faab&lang=en-us 
   prompt_user_idrac
+  prompt_user_orchestrator
   echo ">>> Configuring SecureBoot on ${NODE_BMC_IP}"
   enable_secureboot
   sleep $t
   echo "> Setting BIOS.syssecurity.SecureBootMode UserMode"
+  echo " # racadm set BIOS.syssecurity.SecureBootMode UserMode "
   racadm ${LOGIN} set BIOS.syssecurity.SecureBootMode UserMode
   sleep $t
   echo "> Setting BIOS.syssecurity.SecureBootPolicy Custom"
+  echo " # racadm set BIOS.syssecurity.SecureBootPolicy Custom"
   racadm ${LOGIN} set BIOS.syssecurity.SecureBootPolicy Custom
   sleep $t
   echo "> Setting BIOS.syssecurity.TpmSecurity On"
+  echo " # racadm set BIOS.syssecurity.TpmSecurity On"
   racadm ${LOGIN} set BIOS.syssecurity.TpmSecurity On
   sleep $t
   echo "> Setting BIOS.syssecurity.Tpm2Hierarchy Enabled"
+  echo " # racadm set BIOS.syssecurity.Tpm2Hierarchy Enabled"
   racadm ${LOGIN} set BIOS.syssecurity.Tpm2Hierarchy Enabled
+  echo "> Importing secure boot certificates into ${NODE_BMC_IP}"
+  echo " # racadm bioscert import -t 2 -k 0 -f ${CLUSTER_FQDN}-db.der:"
+  racadm ${LOGIN} bioscert import -t 2 -k 0 -f ${CLUSTER_FQDN}-db.der
   sleep $t
   activate_settings
   }
@@ -180,6 +205,7 @@ disable_secureboot() {
   echo ">>> Disabling SecureBoot on ${NODE_BMC_IP}"
   user_confirmation
   echo "> Setting BIOS.syssecurity.SecureBoot Disabled"
+  echo " # racadm set BIOS.syssecurity.SecureBoot Disabled"
   racadm ${LOGIN} set BIOS.syssecurity.SecureBoot Disabled
   }
 
@@ -188,7 +214,9 @@ enable_secureboot() {
   prompt_user_idrac
   echo ">>> Enabling SecureBoot on ${NODE_BMC_IP}"
   user_confirmation
+  set_bios_security
   echo "> Setting BIOS.syssecurity.SecureBoot Enabled"
+  echo " # racadm set BIOS.syssecurity.SecureBoot Enabled"
   racadm ${LOGIN} set BIOS.syssecurity.SecureBoot Enabled 
   }
 
@@ -204,16 +232,16 @@ set_bios_network() {
   echo "--------------------------------------------------"
   read -p '??? Please specify target NIC.Slot.slot#-port# (e.g. NIC.Slot.2-1) or NIC.Slot.slot.slot#-partition#-port# (e.g. NIC.Slot.4-1-1) for HTTPS Boot assignment as reported in iDRAC inventory :  ' NICSLOT
   echo ""
-  echo ">>> Enabling HTTP Boot Device 1"
+  echo "> Enabling HTTP Boot Device 1"
   racadm ${LOGIN} set BIOS.NetworkSettings.HttpDev1EnDis Enabled
   sleep $t
-  echo ">>> Assigning HTTP Boot Device 1 to ${NICSLOT}"
+  echo "> Assigning HTTP Boot Device 1 to ${NICSLOT}"
   racadm ${LOGIN} set BIOS.HttpDev1Settings.HttpDev1Interface "${NICSLOT}"
   sleep $t
-  echo ">>> Setting Boot URL to ${IPXE_EFI}"
+  echo "> Setting Boot URL to ${IPXE_EFI}"
   racadm ${LOGIN} set BIOS.HttpDev1Settings.HttpDev1Uri "${IPXE_EFI}"
   sleep $t
-  echo ">>> Enabling HTTP Boot TLS Verification"
+  echo "> Enabling HTTP Boot TLS Verification"
   racadm ${LOGIN} set BIOS.HttpDev1TlsConfig.HttpDev1TlsMode OneWay
   sleep $t
   activate_settings
@@ -224,10 +252,8 @@ uefi_http_boot() {
   prompt_user_idrac
   echo -e '>>> Setting one time boot order to HTTPS Boot then rebooting system to start onboarding'
   echo ""
+  echo " # racadm set iDRAC.serverboot.firstbootdevice UEFIHttp"
   racadm ${LOGIN} set iDRAC.serverboot.firstbootdevice UEFIHttp
-  #racadm ${LOGIN} set BIOS.OneTimeBoot.OneTimeUefiBootSeqDev NIC.HttpDevice.1-1
-  #racadm ${LOGIN} set BIOS.BiosBootSettings.SetBootOrderEn Disk.SATAEmbedded.A-1,NIC.HttpDevice.1-1
-  #racadm ${LOGIN} set BIOS.BiosBootSettings.UefiBootSeq Disk.SATAEmbedded.A-1,NIC.HttpDevice.1-1
   sleep $t
   }
 
@@ -248,6 +274,7 @@ get_hw_detail() {
 activate_settings(){
   P=""
   echo ">>> Activating iDRAC configuration changes"
+  echo ">>>>>> # racadm jobqueue create BIOS.Setup.1-1 -r pwrcycle"
   prompt_user_idrac
   JOB=$(racadm ${LOGIN} jobqueue create BIOS.Setup.1-1 -r pwrcycle -s TIME_NOW -e TIME_NA | tee /dev/tty | grep "Commit JID"| awk -F'[=]' '{print $2}' |  tr -d '[ ]\r\n$')
   JOBID=$(echo ${JOB}|tr -d '[ ]\r\n$')
@@ -266,6 +293,7 @@ activate_settings(){
 clear_sec_settings() {
   prompt_user_idrac
   echo ">>> Clearing TPM on ${NODE_BMC_IP}"
+  echo " # racadm set BIOS.syssecurity.Tpm2Hierarchy Clear "
   racadm ${LOGIN} set BIOS.syssecurity.Tpm2Hierarchy Clear
   }
 
@@ -273,6 +301,7 @@ clear_sec_settings() {
 host_powerup() {
   prompt_user_idrac
   echo '>>> Powering server on'
+  echo " # racadm serveraction powerup "
   racadm ${LOGIN} serveraction powerup
   }
 
@@ -280,6 +309,7 @@ host_powerup() {
 host_reset() {
   prompt_user_idrac
   echo '>>> Hard reseting server'
+  echo " # racadm serveraction hardreset" 
   racadm ${LOGIN} serveraction hardreset
   }
 
@@ -287,6 +317,7 @@ host_reset() {
 host_powercycle() {
   prompt_user_idrac
   echo '>>> Powercycling server'
+  echo " # racadm serveraction powercycle"
   racadm ${LOGIN} serveraction powercycle
   }
 
@@ -307,17 +338,20 @@ update_node() {
 configure_node_for_onboarding() {
   echo ">>> NOTE: You will be prompted for user input throughout the process <<< "
   host_powerup
-  prompt_user_orchestrator
-  prompt_user_idrac
   # disabled to not enable secureboot
   #set_bios_security
+  echo "function: set_bios_network"
   set_bios_network
   get_orch_certs
+  echo "function: import_bios_certs "
   import_bios_certs
+  echo "function: host_powercycle"
   host_powercycle
   echo "< Waiting 2 minutes for reboot to load dependencies"
   sleep 120
+  echo "function: uefi_http_boot"
   uefi_http_boot
+  echo "function: host_reset"
   host_reset
   echo "> Node should attempt to HTTP boot for onboarding <"
   }
@@ -354,6 +388,7 @@ help() {
   echo -e "-i (inventory)  : Collect hardware inventory from system" 
   echo -e "-z (insecureboot): Disable secureboot for testing purposes such as virtual media"
   echo -e "-s (secureboot) : (re-)Enable Secureboot"
+  echo -e "-a (apply)      : Apply current iDRAC changes to recover from script crash"
   echo -e "-h (help)       : Print this help"
   echo
   echo -e "* To prepare a server that has not been previously provisioned use the -c (configure) task "
@@ -361,13 +396,14 @@ help() {
   echo -e "* To update a previously provisioned node to onboard with a new instance of Edge Platform,\n use option -n (network) "
   }
 
-while getopts "hcurpdnizs" option; do
+while getopts "hcurpdnizsa" option; do
   case $option in
     h) 
       help
       ;;
     c)
       echo "You have chosen to fully configure a node for onboarding, this will require multiple reboots and take ~15 minutes"
+      echo "NOTE:  Secureboot is disabled by default and matching setting must be chosen when onboarding/provisioning node!!"
       configure_node_for_onboarding
       ;;
     u)
@@ -389,6 +425,7 @@ while getopts "hcurpdnizs" option; do
       ;;
     d)
       echo "You have chosen to reboot the node to manually reset the BIOS or iDRAC settings to defaults"
+      host_powerup
       host_defaults
       ;;
     n) 
@@ -419,9 +456,12 @@ while getopts "hcurpdnizs" option; do
       sleep $t2
       host_powercycle
       ;;
+    a)
+      activate_settings
+      ;;
     \?)
       echo ">>> Error: Invalid option"
-      echo "Usage: $(basename "$0") [-h] [-c] [-u] [-r] [-p] [-d] [-n] [-i] [-s] [-z]"
+      echo "Usage: $(basename "$0") [-h] [-c] [-u] [-r] [-p] [-d] [-n] [-i] [-s] [-z] [-a]"
       exit 1
       ;;
   esac
