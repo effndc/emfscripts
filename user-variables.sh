@@ -8,9 +8,9 @@
 
 # Define variables for rapid re-use
 ## If not being executed on orchestrator node, define these variables manually for rapid re-use.
-CLUSTER_FQDN=
-KC_ADMINUSER=
-KC_ADMIN_PASSWORD=
+#CLUSTER_FQDN="a.cluster.domain"
+#KC_ADMINUSER="admin"
+#KC_ADMIN_PASSWORD="MyPassw0rd123!"
 
 ## If being executed directly on the Orchestrator node you can discover some variables by setting this to true:
 AUTO_COLLECT_VARS=true
@@ -26,12 +26,13 @@ AUTO_COLLECT_VARS=true
 
 # Collect FQDN:
 if [ "${AUTO_COLLECT_VARS}" = "true" ]; then
+    echo "Automatic collecting Admin credentials"
     CLUSTER_FQDN=$(kubectl get configmap -n orch-gateway kubernetes-docker-internal -o yaml | yq '.data.dnsNames' | head -1 | sed 's/^- //')
     echo -e "${CYAN}Cluster FQDN Detected as ${CLUSTER_FQDN} ${NC}"
 
     # Collect Keycloak Admin Password:
     KC_ADMINUSER=admin
-    KC_ADMIN_PASSWORD=$(kubectl -n orch-platform get secret platform-keycloak -o jsonpath='{.data.admin-password}' | base64 -d)
+    KC_ADMIN_PASSWORD="$(kubectl -n orch-platform get secret platform-keycloak -o jsonpath='{.data.admin-password}' | base64 -d)"
 fi
 
 # Flags for Curl

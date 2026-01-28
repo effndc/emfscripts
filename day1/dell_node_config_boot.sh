@@ -321,6 +321,13 @@ host_powercycle() {
   racadm ${LOGIN} serveraction powercycle
   }
 
+# Reset iDRAC to defaults
+idrac_reset() {
+  prompt_user_idrac
+  echo ">>> Rebooting iDRAC controller"
+  echo "racadm ${LOGIN} racreset -f"
+  racadm ${LOGIN} racreset soft
+  }
 # Import certs and set boot URI for new onboard target
 update_node() {
   clear_sec_settings
@@ -389,6 +396,7 @@ help() {
   echo -e "-z (insecureboot): Disable secureboot for testing purposes such as virtual media"
   echo -e "-s (secureboot) : (re-)Enable Secureboot"
   echo -e "-a (apply)      : Apply current iDRAC changes to recover from script crash"
+  echo -e "-q (reboot idrac) : Reboot iDRAC controller"
   echo -e "-h (help)       : Print this help"
   echo
   echo -e "* To prepare a server that has not been previously provisioned use the -c (configure) task "
@@ -396,7 +404,7 @@ help() {
   echo -e "* To update a previously provisioned node to onboard with a new instance of Edge Platform,\n use option -n (network) "
   }
 
-while getopts "hcurpdnizsa" option; do
+while getopts "hcurpdnizsaq" option; do
   case $option in
     h) 
       help
@@ -439,16 +447,16 @@ while getopts "hcurpdnizsa" option; do
       get_hw_detail
       ;;
     s)
-     # enable secure boot
-     prompt_user_orchestrator
-     prompt_user_idrac
-     enable_secureboot
-     activate_settings
-     get_orch_certs
-     import_bios_certs
-     uefi_http_boot
-     host_powercycle
-     ;;
+      # enable secure boot
+      prompt_user_orchestrator
+      prompt_user_idrac
+      enable_secureboot
+      activate_settings
+      get_orch_certs
+      import_bios_certs
+      uefi_http_boot
+      host_powercycle
+      ;;
     z)
       disable_secureboot
       activate_settings
@@ -458,6 +466,9 @@ while getopts "hcurpdnizsa" option; do
       ;;
     a)
       activate_settings
+      ;;
+    q) 
+      idrac_reset
       ;;
     \?)
       echo ">>> Error: Invalid option"
