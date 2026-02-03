@@ -292,8 +292,9 @@ def create_project(
     # To be safe and unique: {project_name}-admin is safer? 
     # But prompt says "Organization Project Admin". Let's ask.
     
-    create_default_users = Confirm.ask(f"Create default users for {project_name}?", default=True)
-    if create_default_users:
+    # ask specifically for Onboarding User
+    create_onboarding = Confirm.ask(f"Create Onboarding User for {project_name}?", default=True)
+    if create_onboarding:
         # A. Onboarding User
         onboarding_user = f"{selected_org}-{project_name}-onboard"
         onboarding_pass = ask_password(f"Password for {onboarding_user}")
@@ -309,45 +310,45 @@ def create_project(
             kc_admin.add_user_to_group(uid, g["id"])
         console.print(f"[green]✓ Onboarding User {onboarding_user} created[/green]")
 
-        # B. Update Org Admin (Add all EXCEPT Onboarding)
-        org_admin_name = f"{selected_org}-admin"
-        console.print(f"Updating Org Admin {org_admin_name} with Project permissions...")
-        
-        oa_id = None
-        try:
-             # Find user ID - Use kc_admin (Platform Admin)
-             u = kc_admin.get_user(org_admin_name)
-             if u:
-                 oa_id = u["id"]
-                 console.print(f"[dim]Found Org Admin ID: {oa_id}[/dim]")
-             else:
-                 console.print(f"[yellow]User {org_admin_name} not found via get_user (exact match).[/yellow]")
-        except Exception as e:
-            console.print(f"[red]Error searching for {org_admin_name}: {e}[/red]")
+    # B. Update Org Admin (Always, unless skipped by error)
+    org_admin_name = f"{selected_org}-admin"
+    console.print(f"Updating Org Admin {org_admin_name} with Project permissions...")
+    
+    oa_id = None
+    try:
+            # Find user ID - Use kc_admin (Platform Admin)
+            u = kc_admin.get_user(org_admin_name)
+            if u:
+                oa_id = u["id"]
+                console.print(f"[dim]Found Org Admin ID: {oa_id}[/dim]")
+            else:
+                console.print(f"[yellow]User {org_admin_name} not found via get_user (exact match).[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error searching for {org_admin_name}: {e}[/red]")
 
-        if oa_id:
-            groups_to_add = ["Edge-Manager-Group", "Edge-Operator-Group", "Host-Manager-Group"] # "Project-Manager-Group" is Org level? 
-            # createProjectAdmin script uses: "Edge-Manager-Group" "Edge-Onboarding-Group" "Edge-Operator-Group" "Host-Manager-Group"
-            # But here we want ALL EXCEPT Onboarding.
-            
-            with get_spinner("Assigning groups to Org Admin...") as p:
-                for suffix in groups_to_add:
-                    g_name = f"{proj_uuid}_{suffix}"
-                    # Use polling because groups creation is async by EMF-Orchestrator
-                    g = poll_until(lambda: kc_admin.get_group_by_path(g_name), lambda x: x, description=f"Sync {suffix}")
-                    
-                    if g:
-                        try:
-                            # Note: Org Admin might have other project groups.
-                            # We trust the relationship here (Project is in the Org), so we skip the strict single-tenant constraint check
-                            # which might confuse Project UUIDs with Org UUIDs.
-                            # kc_admin.validate_user_constraints(oa_id, g_name)
-                            kc_admin.add_user_to_group(oa_id, g["id"])
-                        except Exception as e:
-                            console.print(f"[yellow]Skipped {g_name}: {e}[/yellow]")
-            console.print(f"[green]✓ Org Admin updated[/green]")
-        else:
-            console.print(f"[yellow]Org Admin {org_admin_name} not found, skipping update.[/yellow]")
+    if oa_id:
+        groups_to_add = ["Edge-Manager-Group", "Edge-Operator-Group", "Host-Manager-Group"] # "Project-Manager-Group" is Org level? 
+        # createProjectAdmin script uses: "Edge-Manager-Group" "Edge-Onboarding-Group" "Edge-Operator-Group" "Host-Manager-Group"
+        # But here we want ALL EXCEPT Onboarding.
+        
+        with get_spinner("Assigning groups to Org Admin...") as p:
+            for suffix in groups_to_add:
+                g_name = f"{proj_uuid}_{suffix}"
+                # Use polling because groups creation is async by EMF-Orchestrator
+                g = poll_until(lambda: kc_admin.get_group_by_path(g_name), lambda x: x, description=f"Sync {suffix}")
+                
+                if g:
+                    try:
+                        # Note: Org Admin might have other project groups.
+                        # We trust the relationship here (Project is in the Org), so we skip the strict single-tenant constraint check
+                        # which might confuse Project UUIDs with Org UUIDs.
+                        # kc_admin.validate_user_constraints(oa_id, g_name)
+                        kc_admin.add_user_to_group(oa_id, g["id"])
+                    except Exception as e:
+                        console.print(f"[yellow]Skipped {g_name}: {e}[/yellow]")
+        console.print(f"[green]✓ Org Admin updated[/green]")
+    else:
+        console.print(f"[yellow]Org Admin {org_admin_name} not found, skipping update.[/yellow]")
 
 @project_app.command("list")
 def list_projects(
