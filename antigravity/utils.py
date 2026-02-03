@@ -8,7 +8,8 @@ def poll_until(
     check: Callable[[Any], bool],
     interval: int = Config.POLL_INTERVAL,
     timeout: int = Config.POLL_TIMEOUT,
-    description: str = "Polling..."
+    description: str = "Polling...",
+    on_retry: Optional[Callable[[Any], None]] = None
 ) -> Any:
     """
     Polls the action function until the check function returns True.
@@ -21,6 +22,9 @@ def poll_until(
             result = action()
             if check(result):
                 return result
+            
+            if on_retry:
+                on_retry(result)
         except Exception as e:
             # We might want to suppress transient errors or just log them
             pass

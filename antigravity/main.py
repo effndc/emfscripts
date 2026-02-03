@@ -126,14 +126,23 @@ def create_org(
     kc = state["kc"]
 
     # 1. Create Org
+    # 1. Create Org
     with get_spinner(f"Creating Org {name}...") as progress:
-        progress.add_task(f"sending request...")
+        task_id = progress.add_task(f"sending request...")
         emf.create_org(name, description)
         
-        def check_status():
-            return emf.get_org_status(name) == "STATUS_INDICATION_IDLE"
+        def check_status_func():
+            return emf.get_org_status(name)
         
-        poll_until(check_status, lambda x: x, description="Org Provisioning")
+        def on_retry(status):
+            progress.update(task_id, description=f"Provisioning... Current Status: {status}")
+
+        poll_until(
+            check_status_func, 
+            lambda x: x == "STATUS_INDICATION_IDLE",
+            description="Org Provisioning",
+            on_retry=on_retry
+        )
         org_uuid = emf.get_org_uuid(name)
 
     console.print(f"[green]✓ Organization {name} Created (UUID: {org_uuid})[/green]")
@@ -248,16 +257,25 @@ def create_project(
     emf_org = EMFClient(kc_org.token)
 
     # 3. Create Project
+    # 3. Create Project
     with get_spinner(f"Creating Project {project_name}...") as p:
-        p.add_task("Requesting...")
+        task_id = p.add_task("Requesting...")
         emf_org.create_project(project_name, description)
         
-        def check_status():
-            return emf_org.get_project_status(project_name) == "STATUS_INDICATION_IDLE"
-        
+        def check_status_func():
+            return emf_org.get_project_status(project_name)
+
+        def on_retry(status):
+            p.update(task_id, description=f"Provisioning... Current Status: {status}")
+
         # We might need to poll using the global admin if the org admin loses context? 
         # But usually polling with same token is fine.
-        poll_until(check_status, lambda x: x, description="Provisioning")
+        poll_until(
+            check_status_func, 
+            lambda x: x == "STATUS_INDICATION_IDLE", 
+            description="Provisioning",
+            on_retry=on_retry
+        )
         
         # Get UUID (using Org Admin token)
         proj_uuid = emf_org.get_project_uuid(project_name)
