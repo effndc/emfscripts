@@ -5,17 +5,25 @@
 A robust, portable CLI tool for managing EMF multi-tenancy, ensuring consistency across Orchestrator and Keycloak.
 
 ## Features
-*   **Workflow Driven**: Dedicated commands for Org, Project, and User workflows.
-*   **Interactive**: Lists available resources (Orgs, Projects) for easy selection.
-*   **Robust**: Handles API polling (waiting for provisioning) automatically.
-*   **Constraint Checking**: 
-    *   Ensures users belong to only one Organization.
-    *   Ensures users have only one `Edge-Onboarding-Group`.
-*   **Portable**: Runs in Docker/Podman with zero system dependencies.
+
+* **Workflow Driven**: Dedicated commands for Org, Project, and User workflows.
+* **Interactive**: Lists available resources (Orgs, Projects) for easy selection.
+* **Robust**: Handles API polling (waiting for provisioning) automatically.
+* **Constraint Checking**:
+  * Ensures users belong to only one Organization.
+  * Ensures users have only one `Edge-Onboarding-Group`.
+* **Portable**: Runs in Docker/Podman with zero system dependencies.
 
 ## Configuration
 
-Create a `.env` file or pass these environment variables to the container:
+The easiest way to configure the tool is to use the provided sample file:
+
+```bash
+cp .env.sample .env
+# Edit .env and set CLUSTER_FQDN and KEYCLOAK_ADMIN_PASS
+```
+
+Alternatively, you can pass environment variables directly to the container logic:
 
 | Variable | Description | Required | Default |
 | :--- | :--- | :--- | :--- |
@@ -31,9 +39,11 @@ Create a `.env` file or pass these environment variables to the container:
 ## Usage
 
 ### Prerequisites
-*   Docker or Podman
+
+* Docker or Podman
 
 > **Note**: If running behind a corporate proxy, pass the proxy variables to the container. Ensure `no_proxy` includes your cluster domain.
+>
 > ```bash
 > docker run \
 >   -e http_proxy=$http_proxy \
@@ -43,13 +53,15 @@ Create a `.env` file or pass these environment variables to the container:
 
 ### Quick Start (Container)
 
-1.  **Build the image**:
+1. **Build the image**:
+
     ```bash
     cd emfscripts/antigravity
     docker build -t emf-manager .
     ```
 
-2.  **Run logic**:
+2. **Run logic**:
+
     ```bash
     # Create an env file with CLUSTER_FQDN
     # The tool will automatically derive Keycloak and EMF URLs.
@@ -59,17 +71,20 @@ Create a `.env` file or pass these environment variables to the container:
         emf-manager org create
     ```
 
-3.  **Run Interactive Setup**:
+3. **Run Interactive Setup**:
+
     ```bash
     docker run -it --rm --network host --env-file .env emf-manager project create
     ```
 
     **Manage Users**:
+
     ```bash
     docker run -it --rm --network host --env-file .env emf-manager user manage
     ```
 
 ### Interactive Shell Mode
+
 For faster operations, you can enter the container shell and run commands directly without restarting the container:
 
 ```bash
@@ -90,24 +105,29 @@ python main.py user manage
 ## Workflows
 
 ### Organization
-*   **Create**: Creates an Org and a default `{org}-admin` user.
-*   **List**: Displays all organizations and their status.
+
+* **Create**: Creates an Org and a default `{org}-admin` user.
+* **List**: Displays all organizations and their status.
 
 ### Project
-*   **Create**: 
-    *   Authenticates as the Organization Admin (prompts for Org Admin password).
-    *   Creates Project in EMF.
-    *   Creates an Onboarding User (`{org}-{project}-onboard`).
-    *   Updates the Org Admin with project management permissions.
-*   **List**: Lists projects within a specific Organization (requires Org Admin authentication).
+
+* **Create**:
+  * Authenticates as the Organization Admin (prompts for Org Admin password).
+  * Creates Project in EMF.
+  * Creates an Onboarding User (`{org}-{project}-onboard`).
+  * Updates the Org Admin with project management permissions.
+* **List**: Lists projects within a specific Organization (requires Org Admin authentication).
 
 ### User
-*   **Manage**: Add or Update users with specific roles (Project Admin, Project User, etc.).
-    *   *Note*: When adding users to projects, the tool warns but allows multi-project membership within an Org.
-*   **List**: Search for users by username or email.
+
+* **Manage**: Add or Update users with specific roles (Project Admin, Project User, etc.).
+  * *Note*: When adding users to projects, the tool warns but allows multi-project membership within an Org.
+* **List**: Search for users by username or email.
 
 ### Command Help
+
 Run with `--help` to see options:
+
 ```bash
 docker run -it --rm emf-manager --help
 docker run -it --rm emf-manager org create --help
