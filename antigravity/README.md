@@ -88,8 +88,8 @@ Alternatively, you can pass environment variables directly to the container logi
 For faster operations, you can enter the container shell and run commands directly without restarting the container:
 
 ```bash
-# Start shell
-docker run -it --rm --network host --env-file .env emf-manager bash
+# Start shell (override entrypoint)
+docker run -it --rm --network host --env-file .env --entrypoint bash emf-manager
 
 # Inside the shell:
 python main.py org list

@@ -14,6 +14,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY . .
 
-# Set entrypoint
-# Set default command, allowing override
-CMD ["python", "main.py"]
+# Set entrypoint to run the script by default
+ENTRYPOINT ["python", "main.py"]
