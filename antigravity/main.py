@@ -316,13 +316,14 @@ def create_project(
         oa_id = None
         try:
              # Find user ID - Use kc_admin (Platform Admin)
-             users = kc_admin.search_users(org_admin_name)
-             for u in users:
-                 if u["username"] == org_admin_name:
-                     oa_id = u["id"]
-                     break
-        except:
-            pass
+             u = kc_admin.get_user(org_admin_name)
+             if u:
+                 oa_id = u["id"]
+                 console.print(f"[dim]Found Org Admin ID: {oa_id}[/dim]")
+             else:
+                 console.print(f"[yellow]User {org_admin_name} not found via get_user (exact match).[/yellow]")
+        except Exception as e:
+            console.print(f"[red]Error searching for {org_admin_name}: {e}[/red]")
 
         if oa_id:
             groups_to_add = ["Edge-Manager-Group", "Edge-Operator-Group", "Host-Manager-Group"] # "Project-Manager-Group" is Org level? 
